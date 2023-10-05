@@ -1,0 +1,42 @@
+version: '3.5'
+
+services:
+  db:
+    container_name: db_prodemu_app
+    image: postgres:12
+    restart: always
+    environment:
+        POSTGRES_PASSWORD: 1234
+        POSTGRES_DB: dbtest1
+    ports:
+         - 7072:5432
+
+  php-fpm:
+    container_name: php-fpm
+    build:
+      context: ./docker/php-fpm
+    depends_on:
+      - db
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_SECRET=${APP_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./proyecto/:/var/www
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./docker/nginx
+    volumes:
+      - ./proyecto/:/var/www
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/sites/:/etc/nginx/sites-available
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d
+      - ./docker/logs:/var/log
+    depends_on:
+      - php-fpm
+    ports:
+      - 8082:80
+
+
